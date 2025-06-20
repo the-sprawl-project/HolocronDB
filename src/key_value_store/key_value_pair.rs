@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+#[derive(Debug, PartialEq)]
 pub struct KeyValuePair {
     key_: String,
     value_: String
