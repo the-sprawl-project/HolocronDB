@@ -1,9 +1,10 @@
 use std::str::FromStr;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
-
 use crate::key_value_store::key_value_pair::KeyValuePair;
 
+
+#[derive(Debug, PartialEq)]
 pub struct KeyValueStore {
     name_: String,
     pairs_: HashMap<String, String>
@@ -56,6 +57,11 @@ impl KeyValueStore {
 
     pub fn name(&self) -> &str {
         &self.name_.as_str()
+    }
+
+    pub fn all(&self) -> HashMap<String, String> {
+        // This is _such_ a waste of space.
+        return self.pairs_.clone();
     }
 }
 
