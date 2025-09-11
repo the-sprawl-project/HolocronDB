@@ -4,7 +4,7 @@ use std::collections::hash_map::Entry;
 use crate::key_value_store::key_value_pair::KeyValuePair;
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct KeyValueStore {
     name_: String,
     pairs_: HashMap<String, String>

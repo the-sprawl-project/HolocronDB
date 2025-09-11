@@ -73,3 +73,33 @@ pub fn read_from_file(src_file: &str) -> Result<KeyValueStore, errors::RWError> 
             context_: e.to_string() })
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn create_simple_kv_store() -> KeyValueStore {
+        let mut kvs = KeyValueStore::new("test");
+        kvs.add(KeyValuePair::new("Hello", "Test"));
+        kvs.add(KeyValuePair::new("Goodbye", "Test"));
+        return kvs;
+    }
+
+    #[test]
+    fn test_obj_to_msg_to_obj() {
+        let kvs = create_simple_kv_store();
+        let msg = key_value_store_to_msg(kvs.clone());
+        let kvs_2 = msg_to_key_value_store(msg);
+
+        assert_eq!(kvs.name(), kvs_2.name());
+
+        for (k, v) in kvs.all() {
+            if let Some(val) = kvs_2.get(&k.clone()) {
+                assert_eq!(v, val.value());
+            } else {
+                assert!(false, "No value found for key {:?}!", k);
+            }
+        }
+    }
+}
