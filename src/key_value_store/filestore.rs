@@ -10,27 +10,8 @@ use crate::{key_value_store::errors::{ErrorKind, RWError},
     proto::KeyValueStoreMsg};
 
 
-fn key_value_store_to_msg(k: KeyValueStore) -> KeyValueStoreMsg {
-    let mut msg = KeyValueStoreMsg::default();
-    msg.name = k.name().to_string();
-    // Iteratively insert all values from the store to the message
-    for v in k.all() {
-        msg.values.insert(v.0, v.1);
-    }
-    return msg;
-}
-
-fn msg_to_key_value_store(m: KeyValueStoreMsg) -> KeyValueStore {
-    let mut store =  KeyValueStore::new(m.name.as_str());
-    for pair in m.values {
-        store.add(KeyValuePair::new(
-            &pair.0, &pair.1));
-    }
-    return store;
-}
-
 pub fn write_to_file(store: KeyValueStore, target_file: &str) -> Result<(), errors::RWError> {
-    let msg = key_value_store_to_msg(store);
+    let msg = store.data();
     // Encoding to a Vec instead of a raw slice allows for custom files sizes
     // not bound by the buffer size. Does this have a performance cost though?
     let bytes = msg.encode_to_vec();
@@ -76,7 +57,7 @@ pub fn read_from_file(
             context_: e.to_string() })}
     };
     match KeyValueStoreMsg::decode(&buf[..n_bytes]) {
-        Ok(msg) => Ok(msg_to_key_value_store(msg)),
+        Ok(msg) => Ok(KeyValueStore::from(msg)),
         Err(e) => Err(RWError { 
             kind_: ErrorKind::DataDecodeError,
             context_: e.to_string() })
@@ -117,8 +98,8 @@ mod tests {
     #[test]
     fn test_obj_to_msg_to_obj() {
         let kvs = create_simple_kv_store();
-        let msg = key_value_store_to_msg(kvs.clone());
-        let kvs_2 = msg_to_key_value_store(msg);
+        let msg = kvs.clone().data();
+        let kvs_2 = KeyValueStore::from(msg);
 
         equality_test(kvs, kvs_2);
     }

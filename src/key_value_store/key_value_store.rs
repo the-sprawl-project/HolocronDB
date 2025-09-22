@@ -2,25 +2,30 @@ use std::str::FromStr;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use crate::key_value_store::key_value_pair::KeyValuePair;
+use crate::proto::KeyValueStoreMsg;
 
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct KeyValueStore {
-    name_: String,
-    pairs_: HashMap<String, String>
+    data_: KeyValueStoreMsg,
 }
 
 impl KeyValueStore {
     pub fn new(name: &str) -> KeyValueStore {
+        let mut data = KeyValueStoreMsg::default();
+        data.name = String::from_str(name).expect("Cannot accept name");
         KeyValueStore {
-            name_: String::from_str(name).expect("Cannot accept name"),
-            pairs_: HashMap::new()
+            data_: data
         }
+    }
+
+    pub fn from(store: KeyValueStoreMsg) -> KeyValueStore {
+        KeyValueStore { data_: store }
     }
 
     pub fn get(&self, key: &str) -> Option<KeyValuePair> {
         let returnable: Option<KeyValuePair>;
-        match self.pairs_.get(key) {
+        match self.data_.values.get(key) {
             Some(x) => {
                 returnable = Some(
                     KeyValuePair::new(key, x));
@@ -33,7 +38,8 @@ impl KeyValueStore {
     }
 
     pub fn add(&mut self, pair: KeyValuePair) -> bool {
-        if let Entry::Vacant(v) = self.pairs_.entry(
+        if let Entry::Vacant(
+            v) = self.data_.values.entry(
             pair.key().to_string()) {
             v.insert(pair.value().to_string());
             return true;
@@ -42,26 +48,30 @@ impl KeyValueStore {
     }
 
     pub fn update(&mut self, pair: KeyValuePair) {
-        self.pairs_.insert(
+        self.data_.values.insert(
             pair.key().to_string(),
             pair.value().to_string()
         );
     }
 
     pub fn delete(&mut self, key: &str) -> bool {
-        match self.pairs_.remove(key) {
+        match self.data_.values.remove(key) {
             Some(_) => true,
             None => false
         }
     }
 
     pub fn name(&self) -> &str {
-        &self.name_.as_str()
+        &self.data_.name.as_str()
     }
 
     pub fn all(&self) -> HashMap<String, String> {
         // This is _such_ a waste of space.
-        return self.pairs_.clone();
+        return self.data_.values.clone();
+    }
+
+    pub fn data(&self) -> KeyValueStoreMsg {
+        return self.data_.clone();
     }
 }
 
