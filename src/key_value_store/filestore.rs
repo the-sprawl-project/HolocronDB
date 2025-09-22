@@ -7,17 +7,14 @@ use std::io::prelude::*;
 
 use prost::Message;
 use crate::{key_value_store::errors::{ErrorKind, RWError},
-    proto::{KeyValuePairMsg, KeyValueStoreMsg}};
+    proto::KeyValueStoreMsg};
 
 
 fn key_value_store_to_msg(k: KeyValueStore) -> KeyValueStoreMsg {
     let mut msg = KeyValueStoreMsg::default();
     msg.name = k.name().to_string();
     for v in k.all() {
-        let mut pair = KeyValuePairMsg::default();
-        pair.key = v.0;
-        pair.value = v.1;
-        msg.values.push(pair);
+        msg.values.insert(v.0, v.1);
     }
     return msg;
 }
@@ -26,7 +23,7 @@ fn msg_to_key_value_store(m: KeyValueStoreMsg) -> KeyValueStore {
     let mut store =  KeyValueStore::new(&m.name);
     for pair in m.values {
         store.add(KeyValuePair::new(
-            &pair.key, &pair.value));
+            &pair.0, &pair.1));
     }
     return store;
 }
