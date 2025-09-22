@@ -13,6 +13,7 @@ use crate::{key_value_store::errors::{ErrorKind, RWError},
 fn key_value_store_to_msg(k: KeyValueStore) -> KeyValueStoreMsg {
     let mut msg = KeyValueStoreMsg::default();
     msg.name = k.name().to_string();
+    // Iteratively insert all values from the store to the message
     for v in k.all() {
         msg.values.insert(v.0, v.1);
     }
@@ -30,6 +31,8 @@ fn msg_to_key_value_store(m: KeyValueStoreMsg) -> KeyValueStore {
 
 pub fn write_to_file(store: KeyValueStore, target_file: &str) -> Result<(), errors::RWError> {
     let msg = key_value_store_to_msg(store);
+    // Encoding to a Vec instead of a raw slice allows for custom files sizes
+    // not bound by the buffer size. Does this have a performance cost though?
     let bytes = msg.encode_to_vec();
     let mut file;
     match File::create(target_file) {
@@ -49,7 +52,8 @@ pub fn write_to_file(store: KeyValueStore, target_file: &str) -> Result<(), erro
     Ok(())
 }
 
-pub fn read_from_file(src_file: &str) -> Result<KeyValueStore, errors::RWError> {
+pub fn read_from_file(
+    src_file: &str) -> Result<KeyValueStore, errors::RWError> {
     let mut file;
     match File::open(src_file) {
         Ok(f) => { file = f; }
@@ -58,14 +62,13 @@ pub fn read_from_file(src_file: &str) -> Result<KeyValueStore, errors::RWError> 
         })}
     };
     let mut buf =  vec![0;1024];
+    // n_bytes will override the default 1024 byte buffer size to allow us to
+    // properly read the protobuf file.
     let n_bytes: usize;
     match file.read(&mut buf) {
         Ok(n_b) => { if n_b == 0 {
            panic!("Empty file!!");
         } else {
-            println!("n_bytes: {:?}", n_b);
-            println!(
-                "buf: {:?}, len: {:?}", buf, buf.len());
             n_bytes = n_b;
         }},
         Err(e) => {return Err(RWError {
@@ -83,6 +86,14 @@ pub fn read_from_file(src_file: &str) -> Result<KeyValueStore, errors::RWError> 
 
 #[cfg(test)]
 mod tests {
+    /// Test cases added:
+    /// 1. (De)serialize between rust objet and protobuf
+    /// 2. File I/O
+    /// Remaining:
+    /// 3. Attempt reading from invalid file, check error
+    /// 4. Attempt writing to invalid file, check error
+    /// 5. Attempt reading bad data, check error
+    /// 6. Permissions check
     use super::*;
 
     fn create_simple_kv_store() -> KeyValueStore {
