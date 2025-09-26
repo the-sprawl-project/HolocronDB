@@ -3,15 +3,15 @@ use std::str::FromStr;
 #[derive(Debug, PartialEq, Clone)]
 pub struct KeyValuePair {
     key_: String,
-    value_: String
+    value_: String,
 }
 
 impl KeyValuePair {
-    pub fn new(k: &str, v: &str) -> KeyValuePair {       
+    pub fn new(k: &str, v: &str) -> KeyValuePair {
         KeyValuePair {
             key_: String::from_str(k).expect("Cannot parse key string!"),
-            value_: String::from_str(v).expect("Cannot parse value string!")
-         }
+            value_: String::from_str(v).expect("Cannot parse value string!"),
+        }
     }
 
     pub fn key(&self) -> &str {
@@ -23,8 +23,7 @@ impl KeyValuePair {
     }
 
     pub fn update_value(&mut self, new_val: &str) {
-        self.value_ = String::from_str(new_val).expect(
-            "Cannot parse new value!");
+        self.value_ = String::from_str(new_val).expect("Cannot parse new value!");
     }
 }
 
@@ -52,3 +51,4 @@ mod tests {
         assert_eq!(item.value(), value_2);
     }
 }
+

@@ -1,14 +1,13 @@
-use std::fmt::{Display, Formatter, Result, Debug};
+use std::fmt::{Debug, Display, Formatter, Result};
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum ErrorKind {
     ErrorNone,
     FileOpenError,
     FileWriteError,
     FileReadError,
-    DataDecodeError
+    DataDecodeError,
 }
-
 
 pub struct RWError {
     pub kind_: ErrorKind,
@@ -23,8 +22,10 @@ impl Display for RWError {
             error_kind_to_str(self.kind_),
             self.context_
         ) {
-            Ok(_) => {},
-            Err(e) => { panic!("{}", e)}
+            Ok(_) => {}
+            Err(e) => {
+                panic!("{}", e)
+            }
         };
 
         Ok(())
@@ -39,8 +40,10 @@ impl Debug for RWError {
             error_kind_to_str(self.kind_),
             self.context_
         ) {
-            Ok(_) => {},
-            Err(e) => { panic!("{}", e)}
+            Ok(_) => {}
+            Err(e) => {
+                panic!("{}", e)
+            }
         };
 
         Ok(())
@@ -53,18 +56,10 @@ fn error_kind_to_str(ek: ErrorKind) -> String {
         ErrorKind::ErrorNone => {
             ret = "";
         }
-        ErrorKind::FileOpenError => {
-            ret = "Cannot open file"
-        }
-        ErrorKind::FileReadError => {
-            ret = "Cannot read file"
-        }
-        ErrorKind::FileWriteError => {
-            ret = "Cannot write to file"
-        }
-        ErrorKind::DataDecodeError => {
-            ret = "Data decode error"
-        }
+        ErrorKind::FileOpenError => ret = "Cannot open file",
+        ErrorKind::FileReadError => ret = "Cannot read file",
+        ErrorKind::FileWriteError => ret = "Cannot write to file",
+        ErrorKind::DataDecodeError => ret = "Data decode error",
     }
     return String::from(ret);
 }
