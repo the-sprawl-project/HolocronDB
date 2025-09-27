@@ -1,0 +1,44 @@
+syntax = "proto3";
+package socket_messages;
+
+message KeyValuePair {
+  string key = 1;
+  string value = 2;
+}
+
+message CreateKVPairReq {
+  KeyValuePair pair = 1;
+}
+
+message CreateKVPairResp {
+  // Returns true if creating the key-value pair was successful.
+  // If the key-value pair already exists, returns false.
+  bool success = 1;
+}
+
+message ReadKVPairReq {
+  string key = 1;
+}
+
+message ReadKVPairResp {
+  // Success indicates whether the key was found in the store
+  bool success = 1;
+  // The pair is the actual KV pair if the key was found
+  KeyValuePair pair = 2;
+}
+
+message UpdateKVPairReq {
+  KeyValuePair pair = 1;
+}
+
+message UpdateKVPairResp {
+  bool success = 1;
+}
+
+message DeleteKVPairReq {
+  string key = 1;
+}
+
+message DeleteKVPairResp {
+  bool success = 1;
+}
