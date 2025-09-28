@@ -3,6 +3,9 @@ use tokio::net::TcpListener;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use crate::key_value_store::key_value_store::KeyValueStore;
 
+use super::decode_utils::{parse_generic_request, parse_ping_request};
+use crate::proto::{GenericRequest, PingRequest};
+
 
 /// The main key value store server. Stores a listening address so that
 /// it may be able to selectively choose the interfaces it listens on
@@ -29,7 +32,7 @@ impl KVSServer {
         // Create an infinite loop that waits on a connection to the socket.
         // Once a connection is hit, spawn off a handler to this connection
         // that reads the data input to the socket, handles it, and exits
-        // gracefully. We do not have persistent sessions as of now.
+        // gracefully.
         loop {
             let (mut socket, addr) = listener.accept().await?;
 
@@ -41,15 +44,31 @@ impl KVSServer {
                     match socket.read(&mut buf).await {
                         Ok(n) if n == 0 => closed = true,
                         Ok(n) => {
-                            // Example for something that prints here
-                            // let val = String::from_utf8_lossy(&buf[..n]);
-                            // let trimmed = val.trim();
-                            // if trimmed.len() == 0 {
-                            //     closed = true;
-                            // }
-                            // println!("Received: {:?}", trimmed);
-                            buf.fill(0);
+                            // Parse a generic request from the socket
+                            let received_req: GenericRequest;
+                            match parse_generic_request(&buf[..n]) {
+                                Ok(v) => { received_req = v; },
+                                Err(e) => {
+                                    eprintln!("Parse error: {:?}", e);
+                                    return;
+                                }
+                            };
+                            let payload = received_req.payload;
+                            let ping_request: PingRequest;
                             
+                            match parse_ping_request(&payload) {
+                                Ok(v) => { ping_request = v; },
+                                Err(e) => {
+                                    eprintln!("Parse error: {:?}", e);
+                                    return;
+                                }
+                            };
+                            let message: String = ping_request.ping_message;
+                            println!("Received ping: {:?}", message);
+                            if let Err(e) = socket.write_all(message.as_bytes()).await {
+                                eprintln!("Could not write back to socket: {:?}", e);
+                            }
+                            buf.fill(0);
                         },
                         Err(e) => {
                             eprintln!("Error: {e:?}");

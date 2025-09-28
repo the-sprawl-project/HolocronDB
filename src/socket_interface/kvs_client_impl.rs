@@ -6,10 +6,12 @@ use prost::Message;
 use crate::proto::{GenericRequest, PingRequest, ReqType};
 
 
+// The client does not support persistent connections as of yet.
+// For that, we will need to persist the stream between connections
+// and make the senders accept it as an input.
 pub struct KVSClient {
     _server_addr: String
 }
-
 
 impl KVSClient {
     pub fn new(server_addr: &str) -> KVSClient {
