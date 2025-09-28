@@ -35,16 +35,28 @@ impl KVSServer {
 
             tokio::spawn(async move {
                 let mut buf = [0u8;1024];
-
-                match socket.read(&mut buf).await {
-                    Ok(n) if n == 0 => return,
-                    Ok(n) => {
-                        // handle
-                    }
-                    Err(e) => {
-                        eprintln!("Error: {e:?}")
+                println!("Received connection from: {:?}", addr);
+                let mut closed = false;
+                while !closed {
+                    match socket.read(&mut buf).await {
+                        Ok(n) if n == 0 => closed = true,
+                        Ok(n) => {
+                            // Example for something that prints here
+                            // let val = String::from_utf8_lossy(&buf[..n]);
+                            // let trimmed = val.trim();
+                            // if trimmed.len() == 0 {
+                            //     closed = true;
+                            // }
+                            // println!("Received: {:?}", trimmed);
+                            buf.fill(0);
+                            
+                        },
+                        Err(e) => {
+                            eprintln!("Error: {e:?}");
+                        }
                     }
                 }
+                println!("Connection from: {:?} closed", addr);
             });
         }
     }
