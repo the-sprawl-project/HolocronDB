@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncWriteExt, AsyncBufReadExt, BufReader};
 use tokio::net::TcpStream;
 use prost::Message;
 use crate::proto::{GenericRequest, PingRequest, ReqType};
@@ -10,15 +10,15 @@ use crate::proto::{GenericRequest, PingRequest, ReqType};
 // For that, we will need to persist the stream between connections
 // and make the senders accept it as an input.
 pub struct KVSClient {
-    _server_addr: String
+    _server_addr: String,
 }
 
 impl KVSClient {
-    pub fn new(server_addr: &str) -> KVSClient {
-        KVSClient {
+    pub async fn new(server_addr: &str) -> std::io::Result<KVSClient> {
+        Ok(KVSClient {
             _server_addr: String::from_str(server_addr).expect(
-                "Could not parse string!")
-        }
+                "Could not parse string!"),
+        })
     }
 
     pub async fn send_ping(&self, message: &str) -> std::io::Result<bool> {

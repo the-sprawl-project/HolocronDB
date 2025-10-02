@@ -37,12 +37,13 @@ impl KVSServer {
             let (mut socket, addr) = listener.accept().await?;
 
             tokio::spawn(async move {
+                let (mut reader, mut writer) = socket.into_split();
                 let mut buf = [0u8;1024];
                 println!("Received connection from: {:?}", addr);
                 let mut closed = false;
                 while !closed {
-                    match socket.read(&mut buf).await {
-                        Ok(n) if n == 0 => closed = true,
+                    match reader.read(&mut buf).await {
+                        Ok(n) if n == 0 => {closed = true},
                         Ok(n) => {
                             // Parse a generic request from the socket
                             let received_req: GenericRequest;
@@ -65,10 +66,9 @@ impl KVSServer {
                             };
                             let message: String = ping_request.ping_message;
                             println!("Received ping: {:?}", message);
-                            if let Err(e) = socket.write_all(message.as_bytes()).await {
+                            if let Err(e) = writer.write_all(message.as_bytes()).await {
                                 eprintln!("Could not write back to socket: {:?}", e);
                             }
-                            buf.fill(0);
                         },
                         Err(e) => {
                             eprintln!("Error: {e:?}");
