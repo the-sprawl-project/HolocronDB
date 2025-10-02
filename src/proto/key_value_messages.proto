@@ -1,0 +1,20 @@
+syntax = "proto3";
+package key_value_messages;
+
+// Protobuf file defining the different kinds of key value pair messages
+
+enum DataType {
+  UINT32 = 0;
+  UINT64 = 1;
+  SINT32 = 2;
+  SINT64 = 3;
+  BOOLEAN = 4;
+  STRING = 5;
+  BINARY = 6;
+}
+
+message GenericKeyValuePair {
+  string key = 1;
+  DataType data_type = 2;
+  bytes value = 3;
+}
