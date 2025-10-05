@@ -3,7 +3,7 @@ use std::str::FromStr;
 use tokio::io::{AsyncWriteExt, AsyncBufReadExt, BufReader};
 use tokio::net::TcpStream;
 use prost::Message;
-use crate::proto::{GenericRequest, PingRequest, ReqType};
+use crate::proto::{GenericRequest, PingRequest, CreateKvPairReq, ReqType, KeyValuePair};
 
 
 // The client does not support persistent connections as of yet.
@@ -30,6 +30,22 @@ impl KVSClient {
         request.set_req_type(ReqType::Ping);
         let binaried_ping = ping_request.encode_to_vec();
         request.payload = binaried_ping;
+        let binaried_req = request.encode_to_vec();
+        stream.write_all(&binaried_req[..]).await?;
+        Ok(true)
+    }
+
+    pub async fn send_create(&self, key: &str, val: &str) -> std::io::Result<bool> {
+        let mut stream = TcpStream::connect(self._server_addr.clone()).await?;
+        let mut request = GenericRequest::default();
+        let mut create_req = CreateKvPairReq::default();
+        let mut pair = KeyValuePair::default();
+        pair.key = String::from(key);
+        pair.value = String::from(val);
+        create_req.pair = Some(pair);
+        let binaried_create = create_req.encode_to_vec();
+        request.payload = binaried_create;
+        request.set_req_type(ReqType::Create);
         let binaried_req = request.encode_to_vec();
         stream.write_all(&binaried_req[..]).await?;
         Ok(true)
