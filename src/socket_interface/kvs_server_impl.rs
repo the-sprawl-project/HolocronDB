@@ -1,10 +1,8 @@
-use std::default;
-use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, RwLock};
 use tokio::net::TcpListener;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use crate::key_value_store::key_value_store::{self, KeyValueStore};
+use crate::key_value_store::key_value_store::KeyValueStore;
 
 use super::decode_utils::*;
 use crate::proto::{CreateKvPairReq, GenericRequest, KeyValuePair, PingRequest, ReqType};
@@ -14,7 +12,7 @@ use crate::proto::{CreateKvPairReq, GenericRequest, KeyValuePair, PingRequest, R
 /// it may be able to selectively choose the interfaces it listens on
 pub struct KVSServer {
     listen_addr_: String,
-    kvs_access_: Arc<RwLock<KeyValueStore>>
+    kvs_access_: RwLock<KeyValueStore>
 }
 
 
@@ -22,16 +20,12 @@ impl KVSServer {
     pub fn new(listening_addr: &str, name: &str) -> Arc<KVSServer> {
         Arc::new(KVSServer {
             listen_addr_: String::from_str(listening_addr).unwrap(),
-            kvs_access_: Arc::new(
+            kvs_access_: 
                 RwLock::new(
                     KeyValueStore::new(name)
                 )
-            )
+            
         })
-    }
-
-    pub fn ptr_kvs(&self) -> Arc<RwLock<KeyValueStore>> {
-        return self.kvs_access_.clone();
     }
 
     pub fn handle_ping_request(&self, binary_req: &[u8]) {
