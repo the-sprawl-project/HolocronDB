@@ -15,13 +15,50 @@ async fn main() -> io::Result<()> {
         input.clear();
         io::stdin().read_line(&mut input)
             .expect("Failed to read line");
-        let ping_msg = input.trim();
-        if ping_msg == "x" {
-            exit_loop = true;
-        } else if ping_msg == "c" {
-            client.send_create("hello", "there").await?;
-        } else {
-            client.send_ping(ping_msg).await?;
+        let ip = input.trim();
+        let control_char = ip.chars().nth(0).unwrap();
+
+        match control_char {
+            'x' => {
+                exit_loop = true
+            },
+            'c' => {
+                let mut split = ip.split(' ');
+                split.next();
+                let key: &str;
+                let val: &str;
+                match split.next() {
+                    None => { 
+                        eprintln!("Expected key!");
+                        break;
+                    },
+                    Some(x) => { key = x; }
+                }
+                match split.next() {
+                    None => {
+                        eprintln!("Expected value!");
+                        break;
+                    },
+                    Some(x) => { val = x; }
+                }
+                client.send_create(key, val).await?;
+            },
+            'p' => {
+                let mut split = ip.split(' ');
+                split.next();
+                let ping_msg: &str;
+                match split.next() {
+                    None => {
+                        eprintln!("Expected message to ping!");
+                        break;
+                    },
+                    Some(x) => { ping_msg = x; }
+                }
+                client.send_ping(ping_msg).await?;
+            },
+            _ => {
+                eprintln!("Unexpected input: {:?}", ip);
+            }
         }
     }
         
