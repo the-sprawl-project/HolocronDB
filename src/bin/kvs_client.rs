@@ -18,6 +18,8 @@ async fn main() -> io::Result<()> {
         let ping_msg = input.trim();
         if ping_msg == "x" {
             exit_loop = true;
+        } else if ping_msg == "c" {
+            client.send_create("hello", "there").await?;
         } else {
             client.send_ping(ping_msg).await?;
         }
