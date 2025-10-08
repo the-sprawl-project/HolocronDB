@@ -3,7 +3,8 @@ use std::fmt::{Debug, Display, Formatter, Result};
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum ErrorKind {
     ErrorNone,
-    ParseError
+    ParseError,
+    ConnectError
 }
 
 pub struct SocketError {
@@ -54,6 +55,7 @@ fn error_kind_to_str(ek: ErrorKind) -> String {
             ret = "";
         }
         ErrorKind::ParseError => ret = "Cannot parse payload",
+        ErrorKind::ConnectError => ret = "Cannot connect to server"
     }
     return String::from(ret);
 }

@@ -8,10 +8,10 @@ async fn main() -> io::Result<()> {
     let mut input = String::new();
     let mut exit_loop = false;
     let client = KVSClient::new("127.0.0.1:8080").await?;
-    println!("KV Store Pinger!!\n--------\nSend x to exit\n-------\n");
+    println!("KV Store client!!\n--------\nSend x to exit\n-------\n");
     while !exit_loop {
         print!("{}", prompt_prefix);
-        io::stdout().flush();
+        let _ = io::stdout().flush();
         input.clear();
         io::stdin().read_line(&mut input)
             .expect("Failed to read line");
