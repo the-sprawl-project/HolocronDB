@@ -39,17 +39,17 @@ impl KVSPersistentClient {
         };
     }
 
-    pub async fn send_ping(&mut self, message: &str) -> std::io::Result<bool> {
+    pub async fn send_ping(&mut self, message: &str) -> Result<bool, SocketError> {
         let mut request = GenericRequest::default();
         let mut ping_request = PingRequest::default();
         ping_request.ping_message = message.to_string();
         request.set_req_type(ReqType::Ping);
         request.payload = ping_request.encode_to_vec();
-        self.send_message(request);
+        self.send_message(request).await?;
         Ok(true)
     }
 
-    pub async fn send_create(&mut self, key: &str, val: &str) -> std::io::Result<bool> {
+    pub async fn send_create(&mut self, key: &str, val: &str) -> Result<bool, SocketError> {
         let mut request = GenericRequest::default();
         let mut create_req = CreateKvPairReq::default();
         let mut pair = KeyValuePair::default();
@@ -58,7 +58,7 @@ impl KVSPersistentClient {
         create_req.pair = Some(pair);
         request.payload = create_req.encode_to_vec();
         request.set_req_type(ReqType::Create);
-        self.send_message(request);
+        self.send_message(request).await?;
         Ok(true)
     }
 

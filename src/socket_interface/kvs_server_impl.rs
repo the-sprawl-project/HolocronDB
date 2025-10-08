@@ -2,7 +2,10 @@ use std::str::FromStr;
 use std::sync::{Arc, RwLock};
 use tokio::net::TcpListener;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio_util::codec::{Framed, LengthDelimitedCodec};
 use crate::key_value_store::key_value_store::KeyValueStore;
+
+use futures::{SinkExt, StreamExt};
 
 use super::decode_utils::*;
 use crate::proto::{CreateKvPairReq, GenericRequest, KeyValuePair, PingRequest, ReqType};
@@ -78,9 +81,7 @@ impl KVSServer {
     // TODO: Given that Error is a trait, we should ideally create custom
     // errors that extend it and improve our error reporting system.
     pub async fn main_loop(self: Arc<Self>) -> Result<(), Box<dyn std::error::Error>> {
-        // Spawn a single listener at the appropriate address
-        let listener = TcpListener::bind(
-            self.listen_addr_.as_str()).await?;
+        let listener = TcpListener::bind(self.listen_addr_.as_str()).await?;
         // Create an infinite loop that waits on a connection to the socket.
         // Once a connection is hit, spawn off a handler to this connection
         // that reads the data input to the socket, handles it, and exits
@@ -89,44 +90,35 @@ impl KVSServer {
             let self_arc = self.clone();
             let (mut socket, addr) = listener.accept().await?;
             tokio::spawn(async move {
-                let (mut reader, mut writer) = socket.into_split();
-                let mut buf = [0u8;1024];
+                let mut framed = Framed::new(
+                    socket, LengthDelimitedCodec::new());
                 println!("Received connection from: {:?}", addr);
-                let mut closed = false;
-                while !closed {
-                    match reader.read(&mut buf).await {
-                        Ok(n) if n == 0 => {closed = true},
-                        Ok(n) => {
-                            // Parse a generic request from the socket
-                            let received_req: GenericRequest;
-                            match parse_generic_request(&buf[..n]) {
-                                Ok(v) => { received_req = v; },
-                                Err(e) => {
-                                    eprintln!("Parse error: {:?}", e);
-                                    return;
-                                }
-                            };
-                            let req_type = received_req.req_type();
-                            let payload = received_req.payload;
-                            match req_type {
-                                ReqType::Ping => {
-                                    self_arc.handle_ping_request(&payload);
-                                },
-                                ReqType::Create => {
-                                    self_arc.handle_create_request(&payload);
-                                },
-                                _ => {
-                                    println!("Coming soon!")
-                                }
-                            }
-                            
+                while let Some(Ok(bytes)) = framed.next().await {
+                    if bytes.len() == 0 {
+                        return;
+                    }
+                    let req: GenericRequest;
+                    match parse_generic_request(&bytes.freeze()) {
+                        Ok(r) => req = r,
+                        Err(e) => { 
+                            eprintln!("Parse error: {:?}", e);
+                            return;
+                        }
+                    }
+                    let req_type = req.req_type();
+                    let payload = req.payload;
+                    match req_type {
+                        ReqType::Ping => {
+                            self_arc.handle_ping_request(&payload);
                         },
-                        Err(e) => {
-                            eprintln!("Error: {e:?}");
+                        ReqType::Create => {
+                            self_arc.handle_create_request(&payload);
+                        },
+                        _ => {
+                            println!("Coming soon!")
                         }
                     }
                 }
-                println!("Connection from: {:?} closed", addr);
             });
         }
     }

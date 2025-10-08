@@ -1,13 +1,15 @@
 use key_value_store::socket_interface::kvs_client_impl::KVSClient;
+use key_value_store::socket_interface::socket_errors::SocketError;
+use key_value_store::socket_interface::kvs_persistent_client_impl::KVSPersistentClient;
 
 use std::io::{self, Write};
 
 #[tokio::main]
-async fn main() -> io::Result<()> {
+async fn main() -> Result<(), SocketError> {
     let prompt_prefix = ">> ";
     let mut input = String::new();
     let mut exit_loop = false;
-    let client = KVSClient::new("127.0.0.1:8080").await?;
+    let mut client = KVSPersistentClient::new("127.0.0.1:8080").await?;
     println!("KV Store client!!\n--------\nSend x to exit\n-------\n");
     while !exit_loop {
         print!("{}", prompt_prefix);
