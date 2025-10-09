@@ -19,6 +19,11 @@ message GenericRequest {
   bytes payload = 2;
 }
 
+message GenericResponse {
+  ReqType req_type = 1;
+  bytes payload = 2;
+}
+
 message PingRequest {
   string ping_message = 1;
 }

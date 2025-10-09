@@ -21,7 +21,7 @@ async fn main() -> Result<(), SocketError> {
 
         match control_char {
             'x' => {
-                exit_loop = true
+                exit_loop = true;
             },
             'c' => {
                 let mut split = ip.split(' ');
@@ -57,8 +57,27 @@ async fn main() -> Result<(), SocketError> {
                 }
                 client.send_ping(ping_msg).await?;
             },
+            'r' => {
+                let mut split = ip.split(' ');
+                split.next();
+                let read_key: &str;
+                match split.next() {
+                    None => {
+                        eprintln!("Expected key to read!");
+                        break;
+                    }
+                    Some(x) => {read_key = x; }
+                }
+                client.send_read(read_key).await?;
+            }
             _ => {
                 eprintln!("Unexpected input: {:?}", ip);
+            }
+        }
+        if !exit_loop {
+            match client.receive_resp().await {
+                Ok(s) => println!("Received: {:?}", s),
+                Err(e) => eprintln!("Received error: {:?}", e)
             }
         }
     }

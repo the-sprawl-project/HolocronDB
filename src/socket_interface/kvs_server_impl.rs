@@ -1,5 +1,6 @@
 use std::str::FromStr;
 use std::sync::{Arc, RwLock};
+use prost::Message;
 use tokio::net::TcpListener;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_util::codec::{Framed, LengthDelimitedCodec};
@@ -8,7 +9,7 @@ use crate::key_value_store::key_value_store::KeyValueStore;
 use futures::{SinkExt, StreamExt};
 
 use super::decode_utils::*;
-use crate::proto::{CreateKvPairReq, GenericRequest, KeyValuePair, PingRequest, ReqType};
+use crate::proto::*;
 
 
 /// The main key value store server. Stores a listening address so that
@@ -16,6 +17,10 @@ use crate::proto::{CreateKvPairReq, GenericRequest, KeyValuePair, PingRequest, R
 pub struct KVSServer {
     listen_addr_: String,
     kvs_access_: RwLock<KeyValueStore>
+}
+
+fn invalid_create_resp() -> CreateKvPairResp {
+    CreateKvPairResp { success: false }
 }
 
 
@@ -31,17 +36,22 @@ impl KVSServer {
         })
     }
 
-    pub fn handle_ping_request(&self, binary_req: &[u8]) {
+    pub fn handle_ping_request(&self, binary_req: &[u8]) -> Vec<u8> {
         let ping_request: PingRequest;
         match parse_ping_request(binary_req) {
             Ok(v) => { ping_request = v; },
             Err(e) => {
                 eprintln!("Parse error: {:?}", e);
-                return;
+                return vec![];
             }
         };
         let message: String = ping_request.ping_message;
         println!("Received ping: {:?}", message);
+        let resp = message.clone() + " acked by server";
+        let ping_resp = PingResponse {
+            ping_resp_message: resp
+        };
+        return ping_resp.encode_to_vec(); 
     }
 
     fn add_value(&self, pair: KeyValuePair) -> bool {
@@ -55,27 +65,70 @@ impl KVSServer {
         return success;
     }
 
-    pub fn handle_create_request(&self, binary_req: &[u8]) {
+    fn get_value(&self, key: &str) -> Option<String> {
+        let store = self.kvs_access_.read().unwrap();
+        let val = (*store).get(key);
+        match val {
+            None => None,
+            Some(kvp) => Some(kvp.value().to_string())
+        }
+    }
+
+    pub fn handle_create_request(&self, binary_req: &[u8]) -> Vec<u8> {
         let create_request: CreateKvPairReq;
         match parse_create_request(binary_req) {
             Ok(v) => { create_request = v; },
             Err(e) => {
                 eprintln!("Parse error: {:?}", e);
-                return;
+                return invalid_create_resp().encode_to_vec();
             }
         }
         if create_request.pair == None {
-            return;
+            println!("No pair to insert");
+            return invalid_create_resp().encode_to_vec();
         }
         let insertable_pair;
         match create_request.pair {
-            None => return,
+            None => return invalid_create_resp().encode_to_vec(),
             Some(x) => { insertable_pair = x; }
         }
         println!("Got key: {:?}", insertable_pair.key.as_str());
         println!("Got value: {:?}", insertable_pair.value.as_str());
 
-        self.add_value(insertable_pair);
+        let success = self.add_value(insertable_pair);
+        let resp = CreateKvPairResp {
+            success: success
+        };
+        return resp.encode_to_vec();
+    }
+
+
+    pub fn handle_read_request(&self, binary_req: &[u8]) -> Vec<u8> {
+        let read_request: ReadKvPairReq;
+        match parse_read_request(binary_req) {
+            Ok(v) => { read_request = v; },
+            Err(e) => {
+                eprintln!("Parse error: {:?}", e);
+                return ReadKvPairResp {
+                    success: false,
+                    pair: None
+                }.encode_to_vec();
+            }
+        }
+        let key = read_request.key;
+        match self.get_value(&key) {
+            None => ReadKvPairResp {
+                    success: false,
+                    pair: None
+                }.encode_to_vec(),
+            Some(x) => ReadKvPairResp {
+                    success: true,
+                    pair: Some(KeyValuePair {
+                        key: key,
+                        value: x
+                    })
+                }.encode_to_vec()
+        }
     }
 
     // TODO: Given that Error is a trait, we should ideally create custom
@@ -107,15 +160,30 @@ impl KVSServer {
                     }
                     let req_type = req.req_type();
                     let payload = req.payload;
+                    let resp: Vec<u8>;
                     match req_type {
                         ReqType::Ping => {
-                            self_arc.handle_ping_request(&payload);
+                            resp = self_arc.handle_ping_request(&payload);
                         },
                         ReqType::Create => {
-                            self_arc.handle_create_request(&payload);
+                            resp = self_arc.handle_create_request(&payload);
+                        },
+                        ReqType::Read => {
+                            resp = self_arc.handle_read_request(&payload);
                         },
                         _ => {
-                            println!("Coming soon!")
+                            println!("Coming soon!");
+                            break;
+                        }
+                    }
+                    let mut generic_resp = GenericResponse::default();
+                    generic_resp.set_req_type(req_type);
+                    generic_resp.payload = resp;
+                    match framed.send(generic_resp.encode_to_vec().into()).await {
+                        Ok(_) => {},
+                        Err(e) => { 
+                            eprintln! ("Error: {:?}", e);
+                            break;
                         }
                     }
                 }

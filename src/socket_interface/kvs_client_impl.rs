@@ -7,6 +7,7 @@ use tokio::net::TcpStream;
 use tokio_util::codec::{Framed, LengthDelimitedCodec};
 use prost::Message;
 use crate::proto::*;
+use super::decode_utils::parse_generic_response;
 use super::socket_errors::{SocketError, ErrorKind};
 
 pub struct KVSClient {
@@ -62,12 +63,26 @@ impl KVSClient {
         Ok(true)
     }
 
-    pub async fn receive_resp(&mut self) -> std::io::Result<()> {
+    pub async fn send_read(&mut self, key: &str) -> Result<bool, SocketError> {
+        let mut request = GenericRequest::default();
+        let mut read_req = ReadKvPairReq::default();
+        read_req.key = key.to_string();
+        request.payload = read_req.encode_to_vec();
+        request.set_req_type(ReqType::Read);
+        self.send_message(request).await?;
+        Ok(true)
+    }
+
+    pub async fn receive_resp(&mut self) -> Result<String, SocketError> {
         if let Some(Ok(bytes)) = self._framed.next().await {
             println!("Got response");
+            match parse_generic_response(&bytes.freeze()) {
+                Ok(x) => return Ok(x),
+                Err(e) => return Err(e)
+            }
         } else {
             eprintln!("Connection closed!");
         }
-        Ok(())
+        Ok("".to_string())
     }
 }
