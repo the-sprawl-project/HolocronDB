@@ -1,53 +1,73 @@
+use std::pin::Pin;
 use std::str::FromStr;
 
+use futures::{SinkExt, StreamExt};
 use tokio::io::{AsyncWriteExt, AsyncBufReadExt, BufReader};
 use tokio::net::TcpStream;
+use tokio_util::codec::{Framed, LengthDelimitedCodec};
 use prost::Message;
-use crate::proto::{GenericRequest, PingRequest, CreateKvPairReq, ReqType, KeyValuePair};
+use crate::proto::*;
+use super::socket_errors::{SocketError, ErrorKind};
 
-
-// The client does not support persistent connections as of yet.
-// For that, we will need to persist the stream between connections
-// and make the senders accept it as an input.
 pub struct KVSClient {
     _server_addr: String,
+    _framed: Framed<TcpStream, LengthDelimitedCodec>
 }
 
 impl KVSClient {
-    pub async fn new(server_addr: &str) -> std::io::Result<KVSClient> {
-        Ok(KVSClient {
-            _server_addr: String::from_str(server_addr).expect(
-                "Could not parse string!"),
-        })
+    pub async fn new(addr: &str) -> Result<Self, SocketError> {
+        let stream;
+        match TcpStream::connect(addr).await {
+            Ok(x) => stream = x,
+            Err(e) => return Err(SocketError {
+                kind_: ErrorKind::ConnectError,
+                context_: e.to_string()
+            })
+        }
+        let framed = Framed::new(stream, LengthDelimitedCodec::new());
+        Ok(Self { _server_addr: String::from(addr),
+                  _framed: framed })
     }
 
-    pub async fn send_ping(&self, message: &str) -> std::io::Result<bool> {
-        let mut stream = TcpStream::connect(self._server_addr.clone()).await?;
+    pub async fn send_message(
+            &mut self, req: GenericRequest) -> Result<(), SocketError> {
+        let bytes = req.encode_to_vec();
+        match self._framed.send(bytes.into()).await {
+            Ok(_) => return Ok(()),
+            Err(e) => return Err(SocketError { kind_: ErrorKind::ConnectError,
+                context_: e.to_string() })
+        };
+    }
+
+    pub async fn send_ping(&mut self, message: &str) -> Result<bool, SocketError> {
         let mut request = GenericRequest::default();
         let mut ping_request = PingRequest::default();
-        ping_request.ping_message = String::from_str(message).expect(
-            "Cannot parse string");
+        ping_request.ping_message = message.to_string();
         request.set_req_type(ReqType::Ping);
-        let binaried_ping = ping_request.encode_to_vec();
-        request.payload = binaried_ping;
-        let binaried_req = request.encode_to_vec();
-        stream.write_all(&binaried_req[..]).await?;
+        request.payload = ping_request.encode_to_vec();
+        self.send_message(request).await?;
         Ok(true)
     }
 
-    pub async fn send_create(&self, key: &str, val: &str) -> std::io::Result<bool> {
-        let mut stream = TcpStream::connect(self._server_addr.clone()).await?;
+    pub async fn send_create(&mut self, key: &str, val: &str) -> Result<bool, SocketError> {
         let mut request = GenericRequest::default();
         let mut create_req = CreateKvPairReq::default();
         let mut pair = KeyValuePair::default();
         pair.key = String::from(key);
         pair.value = String::from(val);
         create_req.pair = Some(pair);
-        let binaried_create = create_req.encode_to_vec();
-        request.payload = binaried_create;
+        request.payload = create_req.encode_to_vec();
         request.set_req_type(ReqType::Create);
-        let binaried_req = request.encode_to_vec();
-        stream.write_all(&binaried_req[..]).await?;
+        self.send_message(request).await?;
         Ok(true)
+    }
+
+    pub async fn receive_resp(&mut self) -> std::io::Result<()> {
+        if let Some(Ok(bytes)) = self._framed.next().await {
+            println!("Got response");
+        } else {
+            eprintln!("Connection closed!");
+        }
+        Ok(())
     }
 }
