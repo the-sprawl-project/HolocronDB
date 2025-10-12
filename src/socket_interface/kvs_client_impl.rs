@@ -75,7 +75,6 @@ impl KVSClient {
 
     pub async fn receive_resp(&mut self) -> Result<String, SocketError> {
         if let Some(Ok(bytes)) = self._framed.next().await {
-            println!("Got response");
             match parse_generic_response(&bytes.freeze()) {
                 Ok(x) => return Ok(x),
                 Err(e) => return Err(e)

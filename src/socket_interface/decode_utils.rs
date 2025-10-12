@@ -62,7 +62,11 @@ fn parse_ping_response(payload: &[u8]) -> Result<String, SocketError> {
 fn parse_create_response(payload: &[u8]) -> Result<String, SocketError> {
     match CreateKvPairResp::decode(payload) {
         Ok(v) => {
-            Ok(v.success.to_string())
+            if (v.success) {
+                Ok("Successfully created pair!".to_string())
+            } else {
+                Ok("Key already exists!".to_string())
+            }
         },
         Err(e) => {
             Err(SocketError {

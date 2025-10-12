@@ -94,8 +94,8 @@ async fn main() -> Result<(), SocketError> {
         }
         if !skip_input {
             match client.receive_resp().await {
-                Ok(s) => println!("Received: {:?}", s),
-                Err(e) => eprintln!("Received error: {:?}", e)
+                Ok(s) => println!("<< {}", s),
+                Err(e) => eprintln!("<! {}", e)
             }
         }
     }
