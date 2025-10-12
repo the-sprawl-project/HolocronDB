@@ -3,13 +3,25 @@ use key_value_store::socket_interface::socket_errors::SocketError;
 
 use std::io::{self, Write};
 
+
+fn print_basic_help() {
+    println!("\n=====How to use this=====");
+    println!("c <key> <value>: Creates simple key value pair");
+    println!("r <key>: Reads a key from the key value store");
+    println!("p <message>: Pings the key value store with a message");
+    println!("x: Exits the client");
+    println!("=========================\n");
+
+}
+
 #[tokio::main]
 async fn main() -> Result<(), SocketError> {
     let prompt_prefix = ">> ";
     let mut input = String::new();
     let mut exit_loop = false;
     let mut client = KVSClient::new("127.0.0.1:8080").await?;
-    println!("KV Store client!!\n--------\nSend x to exit\n-------\n");
+    println!(
+        "KV Store client!!\n--------\nSend x to exit, h for help\n-------\n");
     while !exit_loop {
         print!("{}", prompt_prefix);
         let _ = io::stdout().flush();
@@ -18,10 +30,11 @@ async fn main() -> Result<(), SocketError> {
             .expect("Failed to read line");
         let ip = input.trim();
         let control_char = ip.chars().nth(0).unwrap();
-
+        let mut skip_input = false;
         match control_char {
             'x' => {
                 exit_loop = true;
+                skip_input = true;
             },
             'c' => {
                 let mut split = ip.split(' ');
@@ -69,12 +82,17 @@ async fn main() -> Result<(), SocketError> {
                     Some(x) => {read_key = x; }
                 }
                 client.send_read(read_key).await?;
-            }
+            },
+            'h' => {
+                print_basic_help();
+                skip_input = true;
+            },
             _ => {
                 eprintln!("Unexpected input: {:?}", ip);
+                skip_input = true;
             }
         }
-        if !exit_loop {
+        if !skip_input {
             match client.receive_resp().await {
                 Ok(s) => println!("Received: {:?}", s),
                 Err(e) => eprintln!("Received error: {:?}", e)
