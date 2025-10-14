@@ -9,6 +9,7 @@ fn print_basic_help() {
     println!("c <key> <value>: Creates simple key value pair");
     println!("r <key>: Reads a key from the key value store");
     println!("p <message>: Pings the key value store with a message");
+    println!("u <key> <value>: Updates the key value store with new value");
     println!("x: Exits the client");
     println!("=========================\n");
 
@@ -82,6 +83,27 @@ async fn main() -> Result<(), SocketError> {
                     Some(x) => {read_key = x; }
                 }
                 client.send_read(read_key).await?;
+            },
+            'u' => {
+                let mut split = ip.split(' ');
+                split.next();
+                let key: &str;
+                let val: &str;
+                match split.next() {
+                    None => { 
+                        eprintln!("Expected key!");
+                        break;
+                    },
+                    Some(x) => { key = x; }
+                }
+                match split.next() {
+                    None => {
+                        eprintln!("Expected value!");
+                        break;
+                    },
+                    Some(x) => { val = x; }
+                }
+                client.send_update(key, val).await?;
             },
             'h' => {
                 print_basic_help();

@@ -63,6 +63,19 @@ impl KVSClient {
         Ok(true)
     }
 
+    pub async fn send_update(&mut self, key: &str, val: &str) -> Result<bool, SocketError> {
+        let mut request = GenericRequest::default();
+        let mut update_req = UpdateKvPairReq::default();
+        let mut pair = KeyValuePair::default();
+        pair.key = String::from(key);
+        pair.value = String::from(val);
+        update_req.pair = Some(pair);
+        request.payload = update_req.encode_to_vec();
+        request.set_req_type(ReqType::Update);
+        self.send_message(request).await?;
+        Ok(true)
+    }
+
     pub async fn send_read(&mut self, key: &str) -> Result<bool, SocketError> {
         let mut request = GenericRequest::default();
         let mut read_req = ReadKvPairReq::default();

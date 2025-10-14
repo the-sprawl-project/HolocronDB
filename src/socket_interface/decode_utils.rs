@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 // Importing everything to keep the decode clean.
 // TODO(@Skeletrox): Split into req_decoders and resp_decoders?
 use crate::proto::*;
@@ -37,6 +39,16 @@ pub fn parse_create_request(request: &[u8]) -> Result<CreateKvPairReq, SocketErr
 
 pub fn parse_read_request(request: &[u8]) -> Result<ReadKvPairReq, SocketError> {
     match ReadKvPairReq::decode(request) {
+        Ok(res) => Ok(res),
+        Err(e) => Err(SocketError {
+            kind_: ErrorKind::ParseError,
+            context_: e.to_string()
+        })
+    }
+}
+
+pub fn parse_update_request(request: &[u8]) -> Result <UpdateKvPairReq, SocketError> {
+    match UpdateKvPairReq::decode(request) {
         Ok(res) => Ok(res),
         Err(e) => Err(SocketError {
             kind_: ErrorKind::ParseError,
@@ -100,7 +112,24 @@ fn parse_read_response(payload: &[u8]) -> Result<String, SocketError> {
             })
         }
     }
-    
+}
+
+fn parse_update_response(payload: &[u8]) -> Result<String, SocketError> {
+    match UpdateKvPairResp::decode(payload) {
+         Ok(v) => {
+            if (v.success) {
+                Ok("Successfully updated pair!".to_string())
+            } else {
+                Ok("Key does not exist!".to_string())
+            }
+        },
+        Err(e) => {
+            Err(SocketError {
+                kind_: ErrorKind::ParseError,
+                context_: e.to_string()
+            })
+        }
+    }
 }
 
 
@@ -135,6 +164,12 @@ pub fn parse_generic_response(response: &[u8]) -> Result<String, SocketError> {
                 Err(e) => return Err(e)
             };
         },
+        ReqType::Update => {
+            match parse_update_response(&payload) {
+                Ok(v) => returnable = v,
+                Err(e) => return Err(e)
+            }
+        }
         _ => { 
             returnable = "I did not understand what the server said".to_string();
         }

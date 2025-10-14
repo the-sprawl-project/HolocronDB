@@ -47,11 +47,15 @@ impl KeyValueStore {
         return false;
     }
 
-    pub fn update(&mut self, pair: KeyValuePair) {
+    pub fn update(&mut self, pair: KeyValuePair) -> bool {
+        if let Entry::Vacant(_) = self.data_.values.entry(pair.key().to_string()) {
+            return false;
+        }
         self.data_.values.insert(
             pair.key().to_string(),
             pair.value().to_string()
         );
+        return true;
     }
 
     pub fn delete(&mut self, key: &str) -> bool {

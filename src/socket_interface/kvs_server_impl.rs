@@ -4,6 +4,7 @@ use prost::Message;
 use tokio::net::TcpListener;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_util::codec::{Framed, LengthDelimitedCodec};
+use tokio_util::time::delay_queue::Key;
 use crate::key_value_store::key_value_store::KeyValueStore;
 
 use futures::{SinkExt, StreamExt};
@@ -74,6 +75,12 @@ impl KVSServer {
         }
     }
 
+    fn update_value(&self, pair: KeyValuePair) -> bool {
+        let mut store = self.kvs_access_.write().unwrap();
+        let res = (*store).update(kvp_proto_to_kvp_rust(pair));
+        return res;
+    }
+
     pub fn handle_create_request(&self, binary_req: &[u8]) -> Vec<u8> {
         let create_request: CreateKvPairReq;
         match parse_create_request(binary_req) {
@@ -131,6 +138,31 @@ impl KVSServer {
         }
     }
 
+    pub fn handle_update_request(&self, binary_req: &[u8]) -> Vec<u8> {
+        let update_request: UpdateKvPairReq;
+        match parse_update_request(binary_req) {
+            Ok(v) => { update_request = v; },
+            Err(e) => {
+                eprintln!("Parse error: {:?}", e);
+                return UpdateKvPairResp {
+                    success: false
+                }.encode_to_vec()
+            }
+        }
+        let mut resp = UpdateKvPairResp::default();
+        match update_request.pair {
+            Some(x) => {
+                let success = self.update_value(x);
+                resp.success = success;
+            },
+            None => {
+                resp.success = false;
+            }
+        }
+        return resp.encode_to_vec();
+
+    }
+
     // TODO: Given that Error is a trait, we should ideally create custom
     // errors that extend it and improve our error reporting system.
     pub async fn main_loop(self: Arc<Self>) -> Result<(), Box<dyn std::error::Error>> {
@@ -170,6 +202,9 @@ impl KVSServer {
                         },
                         ReqType::Read => {
                             resp = self_arc.handle_read_request(&payload);
+                        },
+                        ReqType::Update => {
+                            resp = self_arc.handle_update_request(&payload);
                         },
                         _ => {
                             println!("Coming soon!");
