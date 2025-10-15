@@ -23,13 +23,13 @@ $ cargo build
 3. Run the server first
 
 ```bash
-$ target/debug/kvs_server
+$ target/debug/holocrondb_server
 ```
 
 4. Run the client
 
 ```bash
-$ target/debug/kvs_client
+$ target/debug/holocrondb_client
 ```
 
 5. Type `h` for help within the client.
