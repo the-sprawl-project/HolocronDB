@@ -57,6 +57,16 @@ pub fn parse_update_request(request: &[u8]) -> Result <UpdateKvPairReq, SocketEr
     }
 }
 
+pub fn parse_delete_request(request: &[u8]) -> Result <DeleteKvPairReq, SocketError> {
+    match DeleteKvPairReq::decode(request) {
+        Ok(res) => Ok(res),
+        Err(e) => Err(SocketError {
+            kind_: ErrorKind::ParseError,
+            context_: e.to_string()
+        })
+    }
+}
+
 fn parse_ping_response(payload: &[u8]) -> Result<String, SocketError> {
     match PingResponse::decode(payload) {
         Ok(v) => {
@@ -117,8 +127,26 @@ fn parse_read_response(payload: &[u8]) -> Result<String, SocketError> {
 fn parse_update_response(payload: &[u8]) -> Result<String, SocketError> {
     match UpdateKvPairResp::decode(payload) {
          Ok(v) => {
-            if (v.success) {
+            if v.success {
                 Ok("Successfully updated pair!".to_string())
+            } else {
+                Ok("Key does not exist!".to_string())
+            }
+        },
+        Err(e) => {
+            Err(SocketError {
+                kind_: ErrorKind::ParseError,
+                context_: e.to_string()
+            })
+        }
+    }
+}
+
+fn parse_delete_response(payload: &[u8]) -> Result<String, SocketError> {
+    match DeleteKvPairResp::decode(payload) {
+        Ok(v) => {
+            if v.success {
+                Ok("Successfully deleted entry!".to_string())
             } else {
                 Ok("Key does not exist!".to_string())
             }
@@ -169,9 +197,12 @@ pub fn parse_generic_response(response: &[u8]) -> Result<String, SocketError> {
                 Ok(v) => returnable = v,
                 Err(e) => return Err(e)
             }
-        }
-        _ => { 
-            returnable = "I did not understand what the server said".to_string();
+        },
+        ReqType::Delete => {
+            match parse_delete_response(&payload) {
+                Ok(v) => returnable = v,
+                Err(e) => return Err(e)
+            }
         }
     }
     Ok(returnable)

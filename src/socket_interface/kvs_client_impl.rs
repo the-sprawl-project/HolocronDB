@@ -63,6 +63,16 @@ impl KVSClient {
         Ok(true)
     }
 
+    pub async fn send_delete(&mut self, key: &str) -> Result<bool, SocketError> {
+        let mut request = GenericRequest::default();
+        let mut delete_req = DeleteKvPairReq::default();
+        delete_req.key = String::from(key);
+        request.payload = delete_req.encode_to_vec();
+        request.set_req_type(ReqType::Delete);
+        self.send_message(request).await?;
+        Ok(true)
+    }
+
     pub async fn send_update(&mut self, key: &str, val: &str) -> Result<bool, SocketError> {
         let mut request = GenericRequest::default();
         let mut update_req = UpdateKvPairReq::default();

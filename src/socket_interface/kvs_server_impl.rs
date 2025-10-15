@@ -81,6 +81,11 @@ impl KVSServer {
         return res;
     }
 
+    fn delete_value(&self, key: &str) -> bool {
+        let mut store = self.kvs_access_.write().unwrap();
+        (*store).delete(key)
+    }
+
     pub fn handle_create_request(&self, binary_req: &[u8]) -> Vec<u8> {
         let create_request: CreateKvPairReq;
         match parse_create_request(binary_req) {
@@ -160,7 +165,26 @@ impl KVSServer {
             }
         }
         return resp.encode_to_vec();
+    }
 
+    pub fn handle_delete_request(&self, binary_req: &[u8]) -> Vec<u8> {
+        let delete_request: DeleteKvPairReq;
+        match parse_delete_request(binary_req) {
+            Ok(v) => { 
+                delete_request = v;
+                let key = delete_request.key;
+                let success = self.delete_value(&key);
+                return DeleteKvPairResp {
+                    success: success
+                }.encode_to_vec()
+            },
+            Err(e) => {
+                eprintln!("Parse error: {:?}", e);
+                return DeleteKvPairResp {
+                    success: false
+                }.encode_to_vec()
+            }
+        }
     }
 
     // TODO: Given that Error is a trait, we should ideally create custom
@@ -206,9 +230,8 @@ impl KVSServer {
                         ReqType::Update => {
                             resp = self_arc.handle_update_request(&payload);
                         },
-                        _ => {
-                            println!("Coming soon!");
-                            break;
+                        ReqType::Delete => {
+                            resp = self_arc.handle_delete_request(&payload);
                         }
                     }
                     let mut generic_resp = GenericResponse::default();

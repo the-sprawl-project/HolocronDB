@@ -7,6 +7,7 @@ use std::io::{self, Write};
 fn print_basic_help() {
     println!("\n=====How to use this=====");
     println!("c <key> <value>: Creates simple key value pair");
+    println!("d <key>: Deletes key value pair");
     println!("r <key>: Reads a key from the key value store");
     println!("p <message>: Pings the key value store with a message");
     println!("u <key> <value>: Updates the key value store with new value");
@@ -105,6 +106,19 @@ async fn main() -> Result<(), SocketError> {
                 }
                 client.send_update(key, val).await?;
             },
+            'd' => {
+                let mut split = ip.split(' ');
+                split.next();
+                let key: &str;
+                match split.next() {
+                    None => {
+                        eprintln!("Expected key to delete!");
+                        break;
+                    },
+                    Some(x) => { key = x; }
+                }
+                client.send_delete(key).await?;
+            }
             'h' => {
                 print_basic_help();
                 skip_input = true;
