@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 // Importing everything to keep the decode clean.
 // TODO(@Skeletrox): Split into req_decoders and resp_decoders?
 use crate::proto::*;
@@ -84,7 +82,7 @@ fn parse_ping_response(payload: &[u8]) -> Result<String, SocketError> {
 fn parse_create_response(payload: &[u8]) -> Result<String, SocketError> {
     match CreateKvPairResp::decode(payload) {
         Ok(v) => {
-            if (v.success) {
+            if v.success {
                 Ok("Successfully created pair!".to_string())
             } else {
                 Ok("Key already exists!".to_string())

@@ -2,9 +2,7 @@ use std::str::FromStr;
 use std::sync::{Arc, RwLock};
 use prost::Message;
 use tokio::net::TcpListener;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_util::codec::{Framed, LengthDelimitedCodec};
-use tokio_util::time::delay_queue::Key;
 use crate::key_value_store::key_value_store::KeyValueStore;
 
 use futures::{SinkExt, StreamExt};
@@ -197,7 +195,7 @@ impl KVSServer {
         // gracefully.
         loop {
             let self_arc = self.clone();
-            let (mut socket, addr) = listener.accept().await?;
+            let (socket, addr) = listener.accept().await?;
             tokio::spawn(async move {
                 let mut framed = Framed::new(
                     socket, LengthDelimitedCodec::new());
