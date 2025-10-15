@@ -6,12 +6,12 @@ use crate::proto::*;
 use super::decode_utils::parse_generic_response;
 use super::socket_errors::{SocketError, ErrorKind};
 
-pub struct KVSClient {
+pub struct HolocronDBClient {
     _server_addr: String,
     _framed: Framed<TcpStream, LengthDelimitedCodec>
 }
 
-impl KVSClient {
+impl HolocronDBClient {
     pub async fn new(addr: &str) -> Result<Self, SocketError> {
         let stream;
         match TcpStream::connect(addr).await {

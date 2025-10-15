@@ -1,11 +1,11 @@
-use holocron_db::socket_interface::kvs_server_impl::KVSServer;
+use holocron_db::socket_interface::holocron_db_server_impl::HolocronDBServer;
 
 use std::io;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
     println!("Hello, server!");
-    let server = KVSServer::new("127.0.0.1:8080",
+    let server = HolocronDBServer::new("127.0.0.1:8080",
     "default");
     match server.main_loop().await {
         Ok(_) => {}

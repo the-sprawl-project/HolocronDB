@@ -1,4 +1,4 @@
-use holocron_db::socket_interface::kvs_client_impl::KVSClient;
+use holocron_db::socket_interface::holocron_db_client_impl::HolocronDBClient;
 use holocron_db::socket_interface::socket_errors::SocketError;
 
 use std::io::{self, Write};
@@ -21,7 +21,7 @@ async fn main() -> Result<(), SocketError> {
     let prompt_prefix = ">> ";
     let mut input = String::new();
     let mut exit_loop = false;
-    let mut client = KVSClient::new("127.0.0.1:8080").await?;
+    let mut client = HolocronDBClient::new("127.0.0.1:8080").await?;
     println!(
         "KV Store client!!\n--------\nSend x to exit, h for help\n-------\n");
     while !exit_loop {

@@ -13,7 +13,7 @@ use crate::proto::*;
 
 /// The main key value store server. Stores a listening address so that
 /// it may be able to selectively choose the interfaces it listens on
-pub struct KVSServer {
+pub struct HolocronDBServer {
     listen_addr_: String,
     kvs_access_: RwLock<KeyValueStore>
 }
@@ -23,9 +23,9 @@ fn invalid_create_resp() -> CreateKvPairResp {
 }
 
 
-impl KVSServer {
-    pub fn new(listening_addr: &str, name: &str) -> Arc<KVSServer> {
-        Arc::new(KVSServer {
+impl HolocronDBServer {
+    pub fn new(listening_addr: &str, name: &str) -> Arc<HolocronDBServer> {
+        Arc::new(HolocronDBServer {
             listen_addr_: String::from_str(listening_addr).unwrap(),
             kvs_access_: 
                 RwLock::new(
