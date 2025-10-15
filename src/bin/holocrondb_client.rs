@@ -1,5 +1,5 @@
-use key_value_store::socket_interface::kvs_client_impl::KVSClient;
-use key_value_store::socket_interface::socket_errors::SocketError;
+use holocron_db::socket_interface::kvs_client_impl::KVSClient;
+use holocron_db::socket_interface::socket_errors::SocketError;
 
 use std::io::{self, Write};
 

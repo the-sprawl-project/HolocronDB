@@ -1,4 +1,4 @@
-use key_value_store::socket_interface::kvs_server_impl::KVSServer;
+use holocron_db::socket_interface::kvs_server_impl::KVSServer;
 
 use std::io;
 
