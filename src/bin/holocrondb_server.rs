@@ -6,8 +6,8 @@ use std::env;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-     env::set_var("RUST_LOG", "trace");
-    env_logger::init();
+    env::set_var("RUST_LOG", "trace");
+    log4rs::init_file("log4rs.yml", Default::default()).unwrap();
     trace!("Hello, server!");
     let server = HolocronDBServer::new("127.0.0.1:8080",
     "default");
