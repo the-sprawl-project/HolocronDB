@@ -5,6 +5,7 @@ use prost::Message;
 use crate::proto::*;
 use super::decode_utils::parse_generic_response;
 use super::socket_errors::{SocketError, ErrorKind};
+use log::warn;
 
 pub struct HolocronDBClient {
     _server_addr: String,
@@ -99,7 +100,7 @@ impl HolocronDBClient {
                 Err(e) => return Err(e)
             }
         } else {
-            eprintln!("Connection closed!");
+            warn!("Connection closed!");
         }
         Ok("".to_string())
     }
