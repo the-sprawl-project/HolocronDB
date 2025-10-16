@@ -20,7 +20,7 @@ fn print_basic_help() {
 #[tokio::main]
 async fn main() -> Result<(), SocketError> {
     env::set_var("RUST_LOG", "trace");
-    env_logger::init();
+    log4rs::init_file("log4rs.yml", Default::default()).unwrap();
     let prompt_prefix = ">> ";
     let mut input = String::new();
     let mut exit_loop = false;
