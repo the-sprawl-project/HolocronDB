@@ -2,6 +2,7 @@ use holocron_db::socket_interface::holocron_db_client_impl::HolocronDBClient;
 use holocron_db::socket_interface::socket_errors::SocketError;
 
 use std::io::{self, Write};
+use std::env;
 
 
 fn print_basic_help() {
@@ -18,6 +19,8 @@ fn print_basic_help() {
 
 #[tokio::main]
 async fn main() -> Result<(), SocketError> {
+    env::set_var("RUST_LOG", "trace");
+    env_logger::init();
     let prompt_prefix = ">> ";
     let mut input = String::new();
     let mut exit_loop = false;
