@@ -10,6 +10,7 @@ use crate::{
     proto::KeyValueStoreMsg,
 };
 use prost::Message;
+use log::trace;
 
 pub fn write_to_file(store: KeyValueStore, target_file: &str) -> Result<(), errors::RWError> {
     let msg = store.data();
@@ -30,7 +31,7 @@ pub fn write_to_file(store: KeyValueStore, target_file: &str) -> Result<(), erro
     };
     match file.write_all(&bytes) {
         Ok(_) => {
-            println!("bytes: {:?}, len: {:?}", bytes, bytes.len());
+            trace!("bytes: {:?}, len: {:?}", bytes, bytes.len());
         }
         Err(e) => {
             return Err(RWError {
@@ -187,7 +188,7 @@ mod tests {
         };
         match file.write_all(&bytes) {
             Ok(_) => {
-                println!("bytes: {:?}, len: {:?}", bytes, bytes.len());
+                trace!("bytes: {:?}, len: {:?}", bytes, bytes.len());
             }
             Err(e) => {
                 panic!("Test cannot write to file! {:?}", e);

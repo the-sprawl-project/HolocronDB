@@ -9,6 +9,7 @@ prost-types = "0.14"
 tokio = { version = "1", features = ["full"] }
 tokio-util = { version = "0.7", features = ["full"] }
 futures = { version = "0.3" }
+log = "0.4"
 
 [build-dependencies]
 prost-build = { version = "0.14" }

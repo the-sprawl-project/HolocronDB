@@ -9,6 +9,7 @@ use futures::{SinkExt, StreamExt};
 
 use super::decode_utils::*;
 use crate::proto::*;
+use log::{trace, warn, info};
 
 
 /// The main key value store server. Stores a listening address so that
@@ -40,12 +41,12 @@ impl HolocronDBServer {
         match parse_ping_request(binary_req) {
             Ok(v) => { ping_request = v; },
             Err(e) => {
-                eprintln!("Parse error: {:?}", e);
+                warn!("Parse error: {:?}", e);
                 return vec![];
             }
         };
         let message: String = ping_request.ping_message;
-        println!("Received ping: {:?}", message);
+        info!("Received ping: {:?}", message);
         let resp = message.clone() + " acked by server";
         let ping_resp = PingResponse {
             ping_resp_message: resp
@@ -57,9 +58,9 @@ impl HolocronDBServer {
         let mut store = self.kvs_access_.write().unwrap();
         let success = (*store).add(kvp_proto_to_kvp_rust(pair));
         if success {
-            println!("Successfully added pair!");
+            info!("Successfully added pair!");
         } else {
-            println!("Did not add pair!");
+            info!("Did not add pair!");
         }
         return success;
     }
@@ -89,12 +90,12 @@ impl HolocronDBServer {
         match parse_create_request(binary_req) {
             Ok(v) => { create_request = v; },
             Err(e) => {
-                eprintln!("Parse error: {:?}", e);
+                warn!("Parse error: {:?}", e);
                 return invalid_create_resp().encode_to_vec();
             }
         }
         if create_request.pair == None {
-            println!("No pair to insert");
+            warn!("No pair to insert");
             return invalid_create_resp().encode_to_vec();
         }
         let insertable_pair;
@@ -102,8 +103,8 @@ impl HolocronDBServer {
             None => return invalid_create_resp().encode_to_vec(),
             Some(x) => { insertable_pair = x; }
         }
-        println!("Got key: {:?}", insertable_pair.key.as_str());
-        println!("Got value: {:?}", insertable_pair.value.as_str());
+        info!("Got key: {:?}", insertable_pair.key.as_str());
+        info!("Got value: {:?}", insertable_pair.value.as_str());
 
         let success = self.add_value(insertable_pair);
         let resp = CreateKvPairResp {
@@ -118,7 +119,7 @@ impl HolocronDBServer {
         match parse_read_request(binary_req) {
             Ok(v) => { read_request = v; },
             Err(e) => {
-                eprintln!("Parse error: {:?}", e);
+                warn!("Parse error: {:?}", e);
                 return ReadKvPairResp {
                     success: false,
                     pair: None
@@ -146,7 +147,7 @@ impl HolocronDBServer {
         match parse_update_request(binary_req) {
             Ok(v) => { update_request = v; },
             Err(e) => {
-                eprintln!("Parse error: {:?}", e);
+                warn!("Parse error: {:?}", e);
                 return UpdateKvPairResp {
                     success: false
                 }.encode_to_vec()
@@ -177,7 +178,7 @@ impl HolocronDBServer {
                 }.encode_to_vec()
             },
             Err(e) => {
-                eprintln!("Parse error: {:?}", e);
+                warn!("Parse error: {:?}", e);
                 return DeleteKvPairResp {
                     success: false
                 }.encode_to_vec()
@@ -199,7 +200,7 @@ impl HolocronDBServer {
             tokio::spawn(async move {
                 let mut framed = Framed::new(
                     socket, LengthDelimitedCodec::new());
-                println!("Received connection from: {:?}", addr);
+                trace!("Received connection from: {:?}", addr);
                 while let Some(Ok(bytes)) = framed.next().await {
                     if bytes.len() == 0 {
                         return;
@@ -208,7 +209,7 @@ impl HolocronDBServer {
                     match parse_generic_request(&bytes.freeze()) {
                         Ok(r) => req = r,
                         Err(e) => { 
-                            eprintln!("Parse error: {:?}", e);
+                            warn!("Parse error: {:?}", e);
                             return;
                         }
                     }
@@ -238,7 +239,7 @@ impl HolocronDBServer {
                     match framed.send(generic_resp.encode_to_vec().into()).await {
                         Ok(_) => {},
                         Err(e) => { 
-                            eprintln! ("Error: {:?}", e);
+                            warn! ("Error: {:?}", e);
                             break;
                         }
                     }
