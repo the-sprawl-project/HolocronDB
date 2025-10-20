@@ -132,9 +132,8 @@ mod tests {
             store.update(KeyValuePair::new(
                 "another_key", "another_value"
             ));
-            let new_val_2 = store.get("another_key").expect(
-                "Expected value in store!");
-            assert_eq!(new_val_2.value(), "another_value");
+            let new_val_2 = store.get("another_key");
+            assert_eq!(new_val_2, None, "Unexpected entry!");
         }
 
         // test delete
