@@ -9,7 +9,7 @@ use futures::{SinkExt, StreamExt};
 
 use super::decode_utils::*;
 use crate::proto::*;
-use log::{trace, warn, info};
+use log::{trace, warn, info, error};
 
 
 /// The main key value store server. Stores a listening address so that
@@ -83,6 +83,17 @@ impl HolocronDBServer {
     fn delete_value(&self, key: &str) -> bool {
         let mut store = self.kvs_access_.write().unwrap();
         (*store).delete(key)
+    }
+
+    fn backup_key_value_store(&self, backup_id: &str) -> bool {
+        let store = self.kvs_access_.write().unwrap();
+        match store.write_to_file(backup_id) {
+            Ok(_) => return true,
+            Err(e) => {
+                error!("Inner error in backup: {:?}", e.to_string());
+                return false;
+            }
+        };
     }
 
     pub fn handle_create_request(&self, binary_req: &[u8]) -> Vec<u8> {
@@ -186,6 +197,25 @@ impl HolocronDBServer {
         }
     }
 
+    pub fn handle_backup_request(&self, binary_req: &[u8]) -> Vec<u8> {
+        let backup_request: BackupReq;
+        match parse_backup_request(binary_req) {
+            Ok(v) => {
+                backup_request = v;
+            },
+            Err(e) => {
+                warn!("Parse error: {:?}", e);
+                return BackupResp {
+                    success: false
+                }.encode_to_vec()
+            }
+        }
+        let success = self.backup_key_value_store(&backup_request.backup_id);
+        BackupResp {
+            success: success
+        }.encode_to_vec()
+    }
+
     // TODO: Given that Error is a trait, we should ideally create custom
     // errors that extend it and improve our error reporting system.
     pub async fn main_loop(self: Arc<Self>) -> Result<(), Box<dyn std::error::Error>> {
@@ -232,6 +262,9 @@ impl HolocronDBServer {
                         ReqType::Delete => {
                             resp = self_arc.handle_delete_request(&payload);
                         },
+                        ReqType::Backup => {
+                            resp = self_arc.handle_backup_request(&payload);
+                        }
                         _ => {
                             warn!("Unrecognized request type from {:?}", addr);
                             continue;
