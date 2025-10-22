@@ -102,8 +102,17 @@ async fn main() -> Result<(), SocketError> {
                 client.send_create(key, val).await?;
             },
             'b' => {
-                println!("Placeholder for triggering backup");
-                skip_input = true;
+                let mut split = ip.split(' ');
+                split.next();
+                let backup_id: &str;
+                match split.next() {
+                    None => {
+                        eprintln!("Expected backup ID!");
+                        break;
+                    }
+                    Some(x) => {backup_id = x; }
+                }
+                client.send_backup(backup_id).await?;
             },
             'p' => {
                 let mut split = ip.split(' ');

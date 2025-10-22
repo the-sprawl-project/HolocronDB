@@ -105,7 +105,7 @@ impl KeyValueStore {
         };
         match file.write_all(&bytes) {
             Ok(_) => {
-                trace!("bytes: {:?}, len: {:?}", bytes, bytes.len());
+                trace!("Backup length {:?}", bytes.len());
             }
             Err(e) => {
                 return Err(RWError {
