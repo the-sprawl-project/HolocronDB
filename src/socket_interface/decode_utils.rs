@@ -65,6 +65,16 @@ pub fn parse_delete_request(request: &[u8]) -> Result <DeleteKvPairReq, SocketEr
     }
 }
 
+pub fn parse_backup_request(request: &[u8]) -> Result<BackupReq, SocketError> {
+    match BackupReq::decode(request) {
+        Ok(res) => Ok(res),
+        Err(e) => Err(SocketError {
+            kind_: ErrorKind::ParseError,
+            context_: e.to_string()
+        })
+    }
+}
+
 fn parse_ping_response(payload: &[u8]) -> Result<String, SocketError> {
     match PingResponse::decode(payload) {
         Ok(v) => {
@@ -158,6 +168,24 @@ fn parse_delete_response(payload: &[u8]) -> Result<String, SocketError> {
     }
 }
 
+fn parse_backup_response(payload: &[u8]) -> Result<String, SocketError> {
+    match BackupResp::decode(payload) {
+        Ok(v) => {
+            if v.success {
+                Ok("Successfully created backup!".to_string())
+            } else {
+                Ok("Could not complete backup!".to_string())
+            }
+        },
+        Err(e) => {
+            Err(SocketError {
+                kind_: ErrorKind::ParseError,
+                context_: e.to_string()
+            })
+        }
+    }
+}
+
 
 pub fn parse_generic_response(response: &[u8]) -> Result<String, SocketError> {
     let parsed_response: GenericResponse;
@@ -201,6 +229,18 @@ pub fn parse_generic_response(response: &[u8]) -> Result<String, SocketError> {
                 Ok(v) => returnable = v,
                 Err(e) => return Err(e)
             }
+        },
+        ReqType::Backup => {
+            match parse_backup_response(&payload) {
+                Ok(v) => returnable = v,
+                Err(e) => return Err(e)
+            }
+        }
+        _ => {
+            return Err(SocketError {
+                kind_: ErrorKind::ParseError,
+                context_: String::from("Unexpected request type")
+            });
         }
     }
     Ok(returnable)

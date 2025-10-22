@@ -12,6 +12,7 @@ enum ReqType {
   READ = 2;
   UPDATE = 3;
   DELETE = 4;
+  BACKUP = 5;
 }
 
 message GenericRequest {
@@ -34,6 +35,10 @@ message PingResponse {
 
 message CreateKVPairReq {
   KeyValuePair pair = 1;
+}
+
+message BackupReq {
+  string backup_id = 1;
 }
 
 message CreateKVPairResp {
@@ -66,5 +71,9 @@ message DeleteKVPairReq {
 }
 
 message DeleteKVPairResp {
+  bool success = 1;
+}
+
+message BackupResp {
   bool success = 1;
 }
