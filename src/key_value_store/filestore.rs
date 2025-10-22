@@ -31,7 +31,7 @@ pub fn write_to_file(store: KeyValueStore, target_file: &str) -> Result<(), erro
     };
     match file.write_all(&bytes) {
         Ok(_) => {
-            trace!("bytes: {:?}, len: {:?}", bytes, bytes.len());
+            trace!("Backup length: {:?}", bytes.len());
         }
         Err(e) => {
             return Err(RWError {
