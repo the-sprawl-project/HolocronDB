@@ -35,11 +35,11 @@ fn print_basic_help() {
     println!("c <key> <value>: Creates simple key value pair");
     println!("d <key>: Deletes key value pair");
     println!("r <key>: Reads a key from the key value store");
+    println!("b <backup_id>: Backs up the key value store with the specific ID");
     println!("p <message>: Pings the key value store with a message");
     println!("u <key> <value>: Updates the key value store with new value");
     println!("x: Exits the client");
     println!("=========================\n");
-
 }
 
 #[tokio::main]
@@ -100,6 +100,10 @@ async fn main() -> Result<(), SocketError> {
                     Some(x) => { val = x; }
                 }
                 client.send_create(key, val).await?;
+            },
+            'b' => {
+                println!("Placeholder for triggering backup");
+                skip_input = true;
             },
             'p' => {
                 let mut split = ip.split(' ');
