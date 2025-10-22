@@ -2,7 +2,32 @@ use holocron_db::socket_interface::holocron_db_client_impl::HolocronDBClient;
 use holocron_db::socket_interface::socket_errors::SocketError;
 
 use std::io::{self, Write};
-use std::env;
+use log::{info, error};
+use std::{env, process::exit};
+use serde::Deserialize;
+use tokio::fs;
+use toml;
+
+
+#[derive(Deserialize)]
+struct Config {
+    server_addr: ServerAddr
+}
+
+#[derive(Deserialize)]
+struct ServerAddr {
+    ip: String,
+    port: u16
+}
+
+async fn parse_config(path: &str) -> Result<Config, Box<dyn std::error::Error>> {
+    let contents = match fs::read_to_string(path).await {
+        Ok(c) => c,
+        Err(e) => {return Err(Box::new(e)); }
+    };
+    let config: Config = toml::from_str(&contents).unwrap();
+    Ok(config)
+}
 
 
 fn print_basic_help() {
@@ -24,7 +49,21 @@ async fn main() -> Result<(), SocketError> {
     let prompt_prefix = ">> ";
     let mut input = String::new();
     let mut exit_loop = false;
-    let mut client = HolocronDBClient::new("127.0.0.1:8080").await?;
+    let config_loc = "client_config.toml";
+    let config = match parse_config(config_loc).await {
+        Ok(c) => {
+            info!("Successfully read config file: {}", config_loc);
+            c
+        },
+        Err(e) => {
+            error!("Got error: {:?} trying to read config file {}", e, config_loc);
+            exit(1);
+        }
+    };
+    let addr = config.server_addr.ip;
+    let port = config.server_addr.port;
+    let connect_addr = format!("{}:{}", addr, port);
+    let mut client = HolocronDBClient::new(&connect_addr).await?;
     println!(
         "KV Store client!!\n--------\nSend x to exit, h for help\n-------\n");
     while !exit_loop {
