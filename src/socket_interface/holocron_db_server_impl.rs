@@ -231,6 +231,10 @@ impl HolocronDBServer {
                         },
                         ReqType::Delete => {
                             resp = self_arc.handle_delete_request(&payload);
+                        },
+                        _ => {
+                            warn!("Unrecognized request type from {:?}", addr);
+                            continue;
                         }
                     }
                     let mut generic_resp = GenericResponse::default();
