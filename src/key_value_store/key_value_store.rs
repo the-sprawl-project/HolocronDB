@@ -1,9 +1,17 @@
+use log::error;
 use std::str::FromStr;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
+use std::sync::Arc;
 use crate::key_value_store::key_value_pair::KeyValuePair;
+use super::filestore::write_to_file;
 use crate::proto::KeyValueStoreMsg;
 
+use prost::Message;
+use std::fs::File;
+use crate::key_value_store::errors::{ErrorKind, RWError};
+use std::io::prelude::*;
+use log::trace;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct KeyValueStore {
@@ -76,6 +84,37 @@ impl KeyValueStore {
 
     pub fn data(&self) -> KeyValueStoreMsg {
         return self.data_.clone();
+    }
+
+    pub fn write_to_file(&self, target_file: &str) -> Result<(), RWError> {
+        let msg = self.data();
+        // This is the same thing from filestore. We will need to deprecate
+        // that.
+        let bytes = msg.encode_to_vec();
+        let mut file;
+        match File::create(target_file) {
+            Ok(f) => {
+                file = f;
+            }
+            Err(e) => {
+                return Err(RWError {
+                    kind_: ErrorKind::FileOpenError,
+                    context_: e.to_string(),
+                })
+            }
+        };
+        match file.write_all(&bytes) {
+            Ok(_) => {
+                trace!("bytes: {:?}, len: {:?}", bytes, bytes.len());
+            }
+            Err(e) => {
+                return Err(RWError {
+                    kind_: ErrorKind::FileWriteError,
+                    context_: e.to_string(),
+                })
+            }
+        };
+        Ok(())
     }
 }
 
