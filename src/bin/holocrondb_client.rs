@@ -1,8 +1,9 @@
 use holocron_db::socket_interface::holocron_db_client_impl::HolocronDBClient;
 use holocron_db::socket_interface::socket_errors::SocketError;
+use log4rs::{config::{Appender, Root}, encode::pattern::PatternEncoder};
 
 use std::io::{self, Write};
-use log::{info, error};
+use log::{error, info, LevelFilter};
 use std::{env, process::exit};
 use serde::Deserialize;
 use tokio::fs;
@@ -11,13 +12,19 @@ use toml;
 
 #[derive(Deserialize)]
 struct Config {
-    server_addr: ServerAddr
+    server_addr: ServerAddr,
+    log_info: LogInfo
 }
 
 #[derive(Deserialize)]
 struct ServerAddr {
     ip: String,
     port: u16
+}
+
+#[derive(Deserialize)]
+struct LogInfo {
+    log_file: String
 }
 
 async fn parse_config(path: &str) -> Result<Config, Box<dyn std::error::Error>> {
@@ -42,10 +49,26 @@ fn print_basic_help() {
     println!("=========================\n");
 }
 
+fn setup_logging(path: &str) {
+    let log_level = LevelFilter::Trace;
+    let file = log4rs::append::file::FileAppender::builder()
+        .encoder(Box::new(PatternEncoder::new("{d(%Y-%m-%d %H:%M:%S)} [{l}] {m}{n}")))
+        .build(&path)
+        .expect("Failed to create log file!");
+
+    let config = log4rs::config::Config::builder()
+        .appender(Appender::builder().build("file", Box::new(file)))
+        .build(
+            Root::builder()
+                .appender("file")
+                .build(log_level)
+        ).unwrap();
+        log4rs::init_config(config).unwrap();
+}
+
 #[tokio::main]
 async fn main() -> Result<(), SocketError> {
     env::set_var("RUST_LOG", "trace");
-    log4rs::init_file("log4rs.yml", Default::default()).unwrap();
     let prompt_prefix = ">> ";
     let mut input = String::new();
     let mut exit_loop = false;
@@ -62,6 +85,8 @@ async fn main() -> Result<(), SocketError> {
     };
     let addr = config.server_addr.ip;
     let port = config.server_addr.port;
+    let log_file_loc = config.log_info.log_file;
+    setup_logging(&log_file_loc);
     let connect_addr = format!("{}:{}", addr, port);
     let mut client = HolocronDBClient::new(&connect_addr).await?;
     println!(
