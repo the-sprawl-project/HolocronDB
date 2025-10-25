@@ -2,7 +2,7 @@
 
 A simple key value store that I personally use for learning rust and getting
 comfortable with its learning curve, including concurrency support, borrowing
-and whatnot. Will be a part of a larger project soon.
+and whatnot. Part of The Sprawl Project.
 
 
 ## Try it out!
