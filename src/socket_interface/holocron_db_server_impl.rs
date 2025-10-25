@@ -264,7 +264,7 @@ impl HolocronDBServer {
                         },
                         ReqType::Backup => {
                             resp = self_arc.handle_backup_request(&payload);
-                        }
+                        },
                         _ => {
                             warn!("Unrecognized request type from {:?}", addr);
                             continue;

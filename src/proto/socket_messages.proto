@@ -13,6 +13,7 @@ enum ReqType {
   UPDATE = 3;
   DELETE = 4;
   BACKUP = 5;
+  RESTORE = 6;
 }
 
 message GenericRequest {
@@ -38,6 +39,10 @@ message CreateKVPairReq {
 }
 
 message BackupReq {
+  string backup_id = 1;
+}
+
+message RestoreReq {
   string backup_id = 1;
 }
 
@@ -75,5 +80,9 @@ message DeleteKVPairResp {
 }
 
 message BackupResp {
+  bool success = 1;
+}
+
+message RestoreResp {
   bool success = 1;
 }
