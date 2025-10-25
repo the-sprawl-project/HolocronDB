@@ -75,6 +75,16 @@ pub fn parse_backup_request(request: &[u8]) -> Result<BackupReq, SocketError> {
     }
 }
 
+pub fn parse_restore_request(request: &[u8]) -> Result<RestoreReq, SocketError> {
+    match RestoreReq::decode(request) {
+        Ok(res) => Ok(res),
+        Err(e) => Err(SocketError {
+            kind_: ErrorKind::ParseError,
+            context_: e.to_string()
+        })
+    }
+}
+
 fn parse_ping_response(payload: &[u8]) -> Result<String, SocketError> {
     match PingResponse::decode(payload) {
         Ok(v) => {
