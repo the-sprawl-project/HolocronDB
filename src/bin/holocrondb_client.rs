@@ -41,8 +41,9 @@ fn print_basic_help() {
     println!("\n=====How to use this=====");
     println!("c <key> <value>: Creates simple key value pair");
     println!("d <key>: Deletes key value pair");
-    println!("r <key>: Reads a key from the key value store");
+    println!("g <key>: Gets the value of a key from the key value store");
     println!("b <backup_id>: Backs up the key value store with the specific ID");
+    println!("r <backup_id>: Restores the key values store from a specified backup ID");
     println!("p <message>: Pings the key value store with a message");
     println!("u <key> <value>: Updates the key value store with new value");
     println!("x: Exits the client");
@@ -155,6 +156,20 @@ async fn main() -> Result<(), SocketError> {
             'r' => {
                 let mut split = ip.split(' ');
                 split.next();
+                let backup_id: &str;
+                match split.next() {
+                    None => {
+                        eprintln!("Expected backup ID!");
+                        break;
+                    }
+                    Some(x) => {backup_id = x; }
+                }
+                info!("Coming soon: Restore from {}", backup_id);
+                skip_input = true;
+            }
+            'g' => {
+                let mut split = ip.split(' ');
+                split.next();
                 let read_key: &str;
                 match split.next() {
                     None => {
@@ -215,6 +230,5 @@ async fn main() -> Result<(), SocketError> {
             }
         }
     }
-        
     Ok(())
 }
