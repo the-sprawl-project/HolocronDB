@@ -96,6 +96,17 @@ impl HolocronDBServer {
         };
     }
 
+    fn restore_key_value_store(&self, backup_id: &str) -> bool {
+        let mut store = self.kvs_access_.write().unwrap();
+        match store.read_from_file(backup_id) {
+            Ok(_) => return true,
+            Err(e) => {
+                error!("Inner error in restore: {:?}", e.to_string());
+                return false;
+            }
+        }
+    }
+
     pub fn handle_create_request(&self, binary_req: &[u8]) -> Vec<u8> {
         let create_request: CreateKvPairReq;
         match parse_create_request(binary_req) {
@@ -216,6 +227,25 @@ impl HolocronDBServer {
         }.encode_to_vec()
     }
 
+    pub fn handle_restore_request(&self, binary_req: &[u8]) -> Vec<u8> {
+        let restore_request: RestoreReq;
+        match parse_restore_request(binary_req) {
+            Ok(v) => {
+                restore_request = v;
+            },
+            Err(e) => {
+                warn!("Parse error: {:?}", e);
+                return RestoreResp {
+                    success: false
+                }.encode_to_vec()
+            }
+        }
+        let success = self.restore_key_value_store(&restore_request.backup_id);
+        RestoreResp {
+            success: success
+        }.encode_to_vec()
+    }
+
     // TODO: Given that Error is a trait, we should ideally create custom
     // errors that extend it and improve our error reporting system.
     pub async fn main_loop(self: Arc<Self>) -> Result<(), Box<dyn std::error::Error>> {
@@ -265,6 +295,9 @@ impl HolocronDBServer {
                         ReqType::Backup => {
                             resp = self_arc.handle_backup_request(&payload);
                         },
+                        ReqType::Restore => {
+                            resp = self_arc.handle_restore_request(&payload);
+                        }
                         _ => {
                             warn!("Unrecognized request type from {:?}", addr);
                             continue;
