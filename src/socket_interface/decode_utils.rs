@@ -196,6 +196,25 @@ fn parse_backup_response(payload: &[u8]) -> Result<String, SocketError> {
     }
 }
 
+fn parse_restore_response(payload: &[u8]) -> Result<String, SocketError> {
+    match RestoreResp::decode(payload) {
+        Ok(v) => {
+            if v.success {
+                Ok("Successfully restored from backup!".to_string())
+            } else {
+                Ok("Could not restore from backup!".to_string())
+            }
+        },
+        Err(e) => {
+            Err(SocketError {
+                kind_: ErrorKind::ParseError,
+                context_: e.to_string()
+            })
+        }
+    }
+}
+
+
 
 pub fn parse_generic_response(response: &[u8]) -> Result<String, SocketError> {
     let parsed_response: GenericResponse;
@@ -242,6 +261,12 @@ pub fn parse_generic_response(response: &[u8]) -> Result<String, SocketError> {
         },
         ReqType::Backup => {
             match parse_backup_response(&payload) {
+                Ok(v) => returnable = v,
+                Err(e) => return Err(e)
+            }
+        },
+        ReqType::Restore => {
+            match parse_restore_response(&payload) {
                 Ok(v) => returnable = v,
                 Err(e) => return Err(e)
             }
