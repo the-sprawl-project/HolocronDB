@@ -164,8 +164,7 @@ async fn main() -> Result<(), SocketError> {
                     }
                     Some(x) => {backup_id = x; }
                 }
-                info!("Coming soon: Restore from {}", backup_id);
-                skip_input = true;
+                client.send_restore(backup_id).await?;
             }
             'g' => {
                 let mut split = ip.split(' ');
