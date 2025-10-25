@@ -10,7 +10,7 @@ and whatnot. Part of The Sprawl Project.
 1. Clone using SSH
 
 ```bash
-$ git clone git@github.com:Skeletrox/HolocronDB.git
+$ git clone git@github.com:the-sprawl-project/holocron-db.git
 ```
 
 2. Build the project
