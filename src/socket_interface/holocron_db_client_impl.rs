@@ -93,6 +93,16 @@ impl HolocronDBClient {
         Ok(true)
     }
 
+    pub async fn send_restore(&mut self, backup_id: &str) -> Result<bool, SocketError> {
+        let mut request = GenericRequest::default();
+        let mut restore_req = RestoreReq::default();
+        restore_req.backup_id = backup_id.to_string();
+        request.payload = restore_req.encode_to_vec();
+        request.set_req_type(ReqType::Restore);
+        self.send_message(request).await?;
+        Ok(true)
+    }
+
     pub async fn send_backup(&mut self, backup_id: &str) -> Result<bool, SocketError> {
         let mut request = GenericRequest::default();
         let mut read_req = BackupReq::default();
