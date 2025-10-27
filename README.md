@@ -16,8 +16,8 @@ $ git clone git@github.com:the-sprawl-project/holocron-db.git
 2. Build the project
 
 ```bash
-$ cd HolocronDB
-$ cargo build
+$ cd holocron-db
+$ make build
 ```
 
 3. Run the server first
