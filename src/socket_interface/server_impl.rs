@@ -14,7 +14,7 @@ use log::{trace, warn, info, error};
 
 /// The main key value store server. Stores a listening address so that
 /// it may be able to selectively choose the interfaces it listens on
-pub struct HolocronDBServer {
+pub struct ConstructCacheServer {
     listen_addr_: String,
     kvs_access_: RwLock<KeyValueStore>
 }
@@ -24,9 +24,9 @@ fn invalid_create_resp() -> CreateKvPairResp {
 }
 
 
-impl HolocronDBServer {
-    pub fn new(listening_addr: &str, name: &str) -> Arc<HolocronDBServer> {
-        Arc::new(HolocronDBServer {
+impl ConstructCacheServer {
+    pub fn new(listening_addr: &str, name: &str) -> Arc<ConstructCacheServer> {
+        Arc::new(ConstructCacheServer {
             listen_addr_: String::from_str(listening_addr).unwrap(),
             kvs_access_: 
                 RwLock::new(

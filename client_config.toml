@@ -3,4 +3,4 @@ ip = "127.0.0.1"
 port = 8080
 
 [log_info]
-log_file = "holocron_client.log"
+log_file = "construct_cache_client.log"

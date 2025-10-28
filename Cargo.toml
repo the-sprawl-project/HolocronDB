@@ -1,5 +1,5 @@
 [package]
-name = "holocron_db"
+name = "construct_cache"
 version = "0.1.0"
 edition = "2021"
 

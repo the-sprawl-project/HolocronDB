@@ -1,4 +1,4 @@
-use holocron_db::socket_interface::holocron_db_server_impl::HolocronDBServer;
+use construct_cache::socket_interface::server_impl::ConstructCacheServer;
 use log4rs::{config::{Appender, Root}, encode::pattern::PatternEncoder};
 
 use std::io;
@@ -72,7 +72,7 @@ async fn main() -> io::Result<()> {
     setup_logging(&log_file);
     let listen_addr = format!("{}:{}", addr, port);
     trace!("Hello, server!");
-    let server = HolocronDBServer::new(&listen_addr,
+    let server = ConstructCacheServer::new(&listen_addr,
     "default");
     match server.main_loop().await {
         Ok(_) => {}

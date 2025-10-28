@@ -1,5 +1,5 @@
-use holocron_db::socket_interface::holocron_db_client_impl::HolocronDBClient;
-use holocron_db::socket_interface::socket_errors::SocketError;
+use construct_cache::socket_interface::client_impl::ConstructCacheClient;
+use construct_cache::socket_interface::socket_errors::SocketError;
 use log4rs::{config::{Appender, Root}, encode::pattern::PatternEncoder};
 
 use std::io::{self, Write};
@@ -89,7 +89,7 @@ async fn main() -> Result<(), SocketError> {
     let log_file_loc = config.log_info.log_file;
     setup_logging(&log_file_loc);
     let connect_addr = format!("{}:{}", addr, port);
-    let mut client = HolocronDBClient::new(&connect_addr).await?;
+    let mut client = ConstructCacheClient::new(&connect_addr).await?;
     println!(
         "KV Store client!!\n--------\nSend x to exit, h for help\n-------\n");
     while !exit_loop {

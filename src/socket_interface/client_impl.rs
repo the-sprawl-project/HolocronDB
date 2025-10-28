@@ -7,12 +7,12 @@ use super::decode_utils::parse_generic_response;
 use super::socket_errors::{SocketError, ErrorKind};
 use log::warn;
 
-pub struct HolocronDBClient {
+pub struct ConstructCacheClient {
     _server_addr: String,
     _framed: Framed<TcpStream, LengthDelimitedCodec>
 }
 
-impl HolocronDBClient {
+impl ConstructCacheClient {
     pub async fn new(addr: &str) -> Result<Self, SocketError> {
         let stream;
         match TcpStream::connect(addr).await {

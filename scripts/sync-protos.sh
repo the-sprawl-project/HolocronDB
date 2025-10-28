@@ -2,7 +2,7 @@
 
 # Configuration
 PROTO_REPO="https://github.com/the-sprawl-project/sprawl-protocol.git"
-PROJECT_NAME="holocron-db"
+PROJECT_NAME="construct-cache"
 PROTO_DEST_DIR="src/proto"
 LOCK_FILE="proto.lock"
 
